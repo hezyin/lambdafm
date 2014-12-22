@@ -127,21 +127,37 @@ void init_model(Model &model)
         static_cast<float>(0.5/sqrt(static_cast<double>(nr_factor)));
 
     float * w = model.W.data();
-
     for(uint64_t i = 0; i < range_sum; ++i)
     {
         *(w++) = coef*static_cast<float>(drand48());
         *(w++) = 1;
     }
+  
+    float * v = model.V.data();
     for(uint64_t i = 0; i < range_sum; ++i)
     {
-        for(uint32_t d = 0; d < nr_factor; ++d, ++w)
-            *w = coef*static_cast<float>(drand48());
-        for(uint32_t d = 0; d < nr_factor; ++d, ++w)
-            *w = 1;
+        for(uint32_t d = 0; d < nr_factor; ++d, ++v)
+            *v = coef*static_cast<float>(drand48());
+        for(uint32_t d = 0; d < nr_factor; ++d, ++v)
+            *v = 1;
+    }
+
+    float * l = model.L.data();
+    for(uint32_t d = 0; d < nr_factor; ++d)
+    {
+        *(l++) = coef*static_cast<float>(drand48());
+        *(l++) = 1;
+    }
+
+    float * d = model.D.data();
+    for(uint64_t i = 0; i < range_sum; ++i)
+    {
+        *(d++) = coef*static_cast<float>(drand48());
+        *(d++) = 1;
     }
 }
 
+/*
 
 void save_model(Model &model, std::map<std::pair<uint32_t, uint32_t>, uint64_t> &fviMap, std::string output_path)
 {
@@ -179,6 +195,8 @@ void save_model(Model &model, std::map<std::pair<uint32_t, uint32_t>, uint64_t> 
     }
     fclose(modelfile);
 }
+
+*/
 
 /*
 void read_model(std::string const &path, Model& model)
@@ -417,9 +435,10 @@ int main(int const argc, char const * const * const argv)
 
         train(Tr, Va, model, opt);
 
+        /*
         std::cout << "saving model..." << std::flush;
         save_model(model, fviMap, "model.txt");
-        std::cout << "done\n" << std::flush;
+        std::cout << "done\n" << std::flush;*/
 
 	      omp_set_num_threads(1);
     }
