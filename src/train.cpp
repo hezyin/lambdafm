@@ -145,7 +145,7 @@ void init_model(Model &model)
     float * l = model.L.data();
     for(uint32_t d = 0; d < nr_factor; ++d)
     {
-        *(l++) = coef*static_cast<float>(drand48());
+        *(l++) = 2*static_cast<float>(drand48());
         *(l++) = 1;
     }
 
