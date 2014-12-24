@@ -2,9 +2,9 @@
 #include <cstring>
 #include <omp.h>
 #include <iostream>
-#include <map>
 
 #include "common.h"
+#include "pairhash.h"
 
 namespace {
 
@@ -27,7 +27,7 @@ uint32_t get_nr_line(std::string const path)
 } //unamed namespace
 
 
-Problem read_tr_problem(std::string const tr_path, std::map<std::pair<uint32_t, uint32_t>, uint64_t> &fviMap)
+Problem read_tr_problem(std::string const tr_path, std::unordered_map<std::pair<uint32_t, uint32_t>, uint64_t, pairhash> &fviMap)
 {
     if(tr_path.empty())
         return Problem(0, 0, 0);
@@ -38,7 +38,7 @@ Problem read_tr_problem(std::string const tr_path, std::map<std::pair<uint32_t, 
     uint64_t range_sum, w_ind;
     uint32_t nr_line, nr_feature, cf, cv;
     std::pair<uint32_t, uint32_t> temp_pair;
-    std::map<std::pair<uint32_t, uint32_t>, uint64_t>::iterator it;
+    std::unordered_map<std::pair<uint32_t, uint32_t>, uint64_t, pairhash>::iterator it;
 
     f = open_c_file(tr_path.c_str(), "r");
     w_ind = nr_line = nr_feature = 0;
@@ -122,7 +122,7 @@ Problem read_tr_problem(std::string const tr_path, std::map<std::pair<uint32_t, 
     return prob;
 }
 
-Problem read_va_problem(std::string const va_path, std::map<std::pair<uint32_t, uint32_t>, uint64_t> &fviMap, uint64_t const range_sum, uint32_t const nr_feature)
+Problem read_va_problem(std::string const va_path, std::unordered_map<std::pair<uint32_t, uint32_t>, uint64_t, pairhash> &fviMap, uint64_t const range_sum, uint32_t const nr_feature)
 {
     if(va_path.empty())
         return Problem(0, 0, 0);
@@ -136,7 +136,7 @@ Problem read_va_problem(std::string const va_path, std::map<std::pair<uint32_t, 
     char line[kMaxLineSize], feature[100], value[100];
     uint32_t cf, cv;
     std::pair<uint32_t, uint32_t> temp_pair;
-    std::map<std::pair<uint32_t, uint32_t>, uint64_t>::iterator it;
+    std::unordered_map<std::pair<uint32_t, uint32_t>, uint64_t, pairhash>::iterator it;
 
     f = open_c_file(va_path.c_str(), "r");
     for(uint32_t i = 0; fgets(line, kMaxLineSize, f) != nullptr; ++i)

@@ -7,6 +7,9 @@
 
 #include <vector>
 #include <cmath>
+#include <unordered_map>
+
+#include "pairhash.h"
 
 struct Problem
 {
@@ -20,9 +23,10 @@ struct Problem
     std::vector<float> Y; 
 };
 
-Problem read_tr_problem(std::string const tr_path, std::map<std::pair<uint32_t, uint32_t>, uint64_t> &fviMap);
 
-Problem read_va_problem(std::string const va_path, std::map<std::pair<uint32_t, uint32_t>, uint64_t> &fviMap, uint64_t const range_sum, uint32_t const nr_feature);
+Problem read_tr_problem(std::string const tr_path, std::unordered_map<std::pair<uint32_t, uint32_t>, uint64_t, pairhash> &fviMap);
+
+Problem read_va_problem(std::string const va_path, std::unordered_map<std::pair<uint32_t, uint32_t>, uint64_t, pairhash> &fviMap, uint64_t const range_sum, uint32_t const nr_feature);
 
 uint32_t const NODE_SIZE = 2;
 

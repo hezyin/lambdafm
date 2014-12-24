@@ -4,10 +4,12 @@
 #include <omp.h>
 #include <stdio.h>
 #include <cstring>
+#include <unordered_map>
 #include <map>
 
 #include "common.h"
 #include "timer.h"
+#include "pairhash.h"
 
 namespace {
 
@@ -159,7 +161,7 @@ void init_model(Model &model)
 
 /*
 
-void save_model(Model &model, std::map<std::pair<uint32_t, uint32_t>, uint64_t> &fviMap, std::string output_path)
+void save_model(Model &model, std::hash_map<std::pair<uint32_t, uint32_t>, uint64_t> &fviMap, std::string output_path)
 {
     uint64_t range_sum = model.range_sum;
     uint32_t nr_factor = model.nr_factor;
@@ -377,7 +379,7 @@ int main(int const argc, char const * const * const argv)
         return EXIT_FAILURE;
     }
     
-   std::map<std::pair<uint32_t, uint32_t>, uint64_t> fviMap; // key: pair of feature number and its value, value: corresponding index in weight vector 
+    std::unordered_map<std::pair<uint32_t, uint32_t>, uint64_t, pairhash> fviMap; // key: pair of feature number and its value, value: corresponding index in weight vector 
 
     std::cout << "reading tr dataset...\n" << std::flush;
     Problem const Tr = read_tr_problem(opt.Tr_path, fviMap);
