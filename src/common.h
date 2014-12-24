@@ -36,14 +36,12 @@ struct Model
         : range_sum(range_sum), nr_factor(nr_factor),
         W(range_sum * NODE_SIZE),
         V(range_sum * nr_factor * NODE_SIZE),
-        L(nr_factor * NODE_SIZE),
-        D(range_sum * NODE_SIZE) {} // W is initialized by init_model() 
+        L(nr_factor * NODE_SIZE) {}
     uint64_t range_sum;
     uint32_t nr_factor;
     std::vector<float> W;
     std::vector<float> V;
     std::vector<float> L;
-    std::vector<float> D;
 };
 
 FILE *open_c_file(std::string const &path, std::string const &mode);
@@ -66,7 +64,6 @@ inline float wTx(Problem const &prob, Model &model, uint32_t const i,
     float * const W = model.W.data(); //first order parameter
     float * const V = model.V.data(); //second order parameter
     float * const L = model.L.data(); //Lambda
-    float * const D = model.D.data();
 
     float predict = 0.0;
 
@@ -94,16 +91,10 @@ inline float wTx(Problem const &prob, Model &model, uint32_t const i,
             if(j >= range_sum) //ignore if not present in training set
                 continue;
             float * const w = W + j * NODE_SIZE;
-            float * const wshg = w + 1;
-            float const wgradient = kappa + lambda * *w;
-            *w -= static_cast<float>(eta * wgradient / sqrt(*wshg) ); 
-            *wshg += (wgradient * wgradient); //update history gradient sum
-
-            float * const d = D + j * NODE_SIZE;
-            float * const dshg = d + 1;
-            float const dgradient = kappa + lambda * *d;
-            *d -= static_cast<float>(eta * dgradient / sqrt(*dshg) );
-            *dshg += (dgradient * dgradient);
+            float * const shg = w + 1;
+            float const gradient = kappa + lambda * *w;
+            *w -= static_cast<float>(eta * gradient / sqrt(*shg) ); 
+            *shg += (gradient * gradient); //update history gradient sum
         }
 
         //update second order parameters
@@ -148,13 +139,6 @@ inline float wTx(Problem const &prob, Model &model, uint32_t const i,
         for(uint32_t d = 0; d < nr_factor; ++d)
         {
             second_order += *(L + d * NODE_SIZE) * sum_vx_square[d];
-        }
-        for(uint32_t f = 0; f < nr_feature; ++f)
-        {
-            uint64_t const j = J[f];
-            if(j >= range_sum)
-                continue;
-            second_order -= *(D + j * NODE_SIZE);
         }
         predict += (second_order / 2);
     }

@@ -131,7 +131,7 @@ void init_model(Model &model)
     float * w = model.W.data();
     for(uint64_t i = 0; i < range_sum; ++i)
     {
-        *(w++) = coef*static_cast<float>(drand48());
+        *(w++) = 0.005* static_cast<float>(drand48());
         *(w++) = 1;
     }
   
@@ -147,15 +147,8 @@ void init_model(Model &model)
     float * l = model.L.data();
     for(uint32_t d = 0; d < nr_factor; ++d)
     {
-        *(l++) = 2*static_cast<float>(drand48());
+        *(l++) = 0.5 * static_cast<float>(drand48());
         *(l++) = 1;
-    }
-
-    float * d = model.D.data();
-    for(uint64_t i = 0; i < range_sum; ++i)
-    {
-        *(d++) = coef*static_cast<float>(drand48());
-        *(d++) = 1;
     }
 }
 
