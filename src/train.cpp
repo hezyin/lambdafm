@@ -19,10 +19,11 @@ int const kMaxLineSize = 1000000;
 struct Option
 {
     Option() 
-        : eta(0.001f), lambda(0.0f), iter(15), nr_factor(4), 
-          nr_threads(1), do_prediction(true), model_existed(false), save_model(false) {}
+        : eta0(0.001f), eta1(0.001f), eta2(0.001f), eta3(0.001f), lambda(0.0f), 
+          iter(15), nr_factor(4), nr_threads(1), do_prediction(true), 
+          model_existed(false), save_model(false) {}
     std::string Tr_path, Va_path, model_path;
-    float eta, lambda;
+    float eta0, eta1, eta2, eta3, lambda;
     uint32_t iter, nr_factor, nr_threads;
     bool do_prediction;
     bool model_existed;
@@ -40,10 +41,13 @@ std::string train_help()
 "-l <lambda>: set the regularization penalty\n"
 "-k <factor>: set the number of latent factors, which must be a multiple of 4\n"
 "-t <iteration>: set the number of iterations\n"
-"-r <eta>: set the learning rate\n"
+"-e0 <eta0>: set the learning rate for zero order parameters\n"
+"-e1 <eta1>: set the learning rate for first order parameters\n"
+"-e2 <eta2>: set the learning rate for second order parameters\n"
+"-e3 <eta3>: set the learning rate for diagonal lambda parameters\n"
 "-s <nr_threads>: set the number of threads\n"
 "-q: if it is set, then there is no output file\n"
-"-e <model>: use existed model instead of training\n"
+"-m <model>: use existed model instead of training\n"
 "-v: save model after training\n");
 }
 
@@ -73,11 +77,29 @@ Option parse_option(std::vector<std::string> const &args)
             /*if(opt.nr_factor%4 != 0)
                 throw std::invalid_argument("k should be a multiple of 4\n");*/
         }
-        else if(args[i].compare("-r") == 0)
+        else if(args[i].compare("-e0") == 0)
         {
             if(i == argc-1)
                 throw std::invalid_argument("invalid command\n");
-            opt.eta = std::stof(args[++i]);
+            opt.eta0 = std::stof(args[++i]);
+        }
+        else if(args[i].compare("-e1") == 0)
+        {
+            if(i == argc-1)
+                throw std::invalid_argument("invalid command\n");
+            opt.eta1 = std::stof(args[++i]);
+        }
+        else if(args[i].compare("-e2") == 0)
+        {
+            if(i == argc-1)
+                throw std::invalid_argument("invalid command\n");
+            opt.eta2 = std::stof(args[++i]);
+        }
+        else if(args[i].compare("-e3") == 0)
+        {
+            if(i == argc-1)
+                throw std::invalid_argument("invalid command\n");
+            opt.eta3 = std::stof(args[++i]);
         }
         else if(args[i].compare("-l") == 0)
         {
@@ -95,7 +117,7 @@ Option parse_option(std::vector<std::string> const &args)
         {
             opt.do_prediction = false;
         }
-        else if(args[i].compare("-e") == 0)
+        else if(args[i].compare("-m") == 0)
         {
             opt.model_existed = true;
             if(i == argc-1)
@@ -128,10 +150,12 @@ void init_model(Model &model)
     float const coef = 
         static_cast<float>(0.5/sqrt(static_cast<double>(nr_factor)));
 
+    model.w0 = static_cast<float>(0.001 * drand48());
+
     float * w = model.W.data();
     for(uint64_t i = 0; i < range_sum; ++i)
     {
-        *(w++) = 0.005* static_cast<float>(drand48());
+        *(w++) = static_cast<float>(0.005 * drand48());
         *(w++) = 1;
     }
   
@@ -147,14 +171,14 @@ void init_model(Model &model)
     float * l = model.L.data();
     for(uint32_t d = 0; d < nr_factor; ++d)
     {
-        *(l++) = 0.5 * static_cast<float>(drand48());
+        *(l++) = static_cast<float>(0.5 * drand48());
         *(l++) = 1;
     }
 }
 
 /*
 
-void save_model(Model &model, std::hash_map<std::pair<uint32_t, uint32_t>, uint64_t> &fviMap, std::string output_path)
+void save_model(Model &model, std::unordered_map<std::pair<uint32_t, uint32_t>, uint64_t, pairhash> &fviMap, std::string output_path)
 {
     uint64_t range_sum = model.range_sum;
     uint32_t nr_factor = model.nr_factor;
@@ -334,7 +358,7 @@ void train(Problem const &Tr, Problem const &Va, Model &model, Option const &opt
 
             float const y = Tr.Y[i];
 
-            float const t = wTx(Tr, model, i);
+            float const t = wTx_sse(Tr, model, i);
             
             float const expnyt = static_cast<float>(exp(-y*t));
 
@@ -342,7 +366,7 @@ void train(Problem const &Tr, Problem const &Va, Model &model, Option const &opt
 
             float const kappa = -y*expnyt/(1+expnyt);
 
-            wTx(Tr, model, i, kappa, opt.eta, opt.lambda, true);
+            wTx_sse(Tr, model, i, kappa, opt.eta0, opt.eta1, opt.eta2, opt.eta3, opt.lambda, true);
         }
 
         //Tr_loss /= static_cast<double>(Tr.Y.size());
