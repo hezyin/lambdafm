@@ -22,7 +22,7 @@ struct Option
         : eta0(0.004f), eta1(0.001f), eta2(0.001f), eta3(0.001f), lambda(0.0f), 
           iter(15), nr_factor(4), nr_threads(1), do_prediction(true), 
           model_existed(false), save_model(false) {}
-    std::string Tr_path, Va_path, model_path;
+    std::string Tr_path, Va_path, model_path, log_path;
     float eta0, eta1, eta2, eta3, lambda;
     uint32_t iter, nr_factor, nr_threads;
     bool do_prediction;
@@ -48,6 +48,7 @@ std::string train_help()
 "-s <nr_threads>: set the number of threads\n"
 "-q: if it is set, then there is no output file\n"
 "-m <model>: use existed model instead of training\n"
+"-g: <log_path> set the log file path\n"
 "-v: save model after training\n");
 }
 
@@ -123,6 +124,12 @@ Option parse_option(std::vector<std::string> const &args)
             if(i == argc-1)
                 throw std::invalid_argument("invalid command\n");
             opt.model_path = args[++i];
+        }
+        else if(args[i].compare("-g") == 0)
+        {
+            if(i == argc-1)
+                throw std::invalid_argument("invalid command\n");
+            opt.log_path = args[++i];
         }
         else if(args[i].compare("-v") == 0)
         {
@@ -344,6 +351,14 @@ void train(Problem const &Tr, Problem const &Va, Model &model, Option const &opt
         order[i] = i;
 
     Timer timer;
+    FILE * logfile = nullptr;
+    if(!opt.log_path.empty())
+    {
+        logfile = fopen(opt.log_path.c_str(), "w+");
+        fprintf(logfile, "iter     time    tr_loss    va_loss\n");
+        fflush(logfile);
+    }
+    
     printf("iter     time    tr_loss    va_loss\n");
     for(uint32_t iter = 0; iter < opt.iter; ++iter)
     {
@@ -375,8 +390,14 @@ void train(Problem const &Tr, Problem const &Va, Model &model, Option const &opt
 
         double const Va_loss = predict(Va, model);
 
+        if(!opt.log_path.empty())
+        {
+            fprintf(logfile, "%4d %8.1f %10.5f %10.5f\n", iter+1, timer.toc(), Tr_loss, Va_loss);
+            fflush(logfile);
+        }
+
         printf("%4d %8.1f %10.5f %10.5f\n", 
-              iter, timer.toc(), Tr_loss, Va_loss);
+              iter+1, timer.toc(), Tr_loss, Va_loss);
         fflush(stdout);
     }
 }
