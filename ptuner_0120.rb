@@ -9,6 +9,7 @@ ps = []
   end
 end
 
+total = ps.size
 start = Time.now
 f = open("ptuner_ruby_log", "w+")
 
