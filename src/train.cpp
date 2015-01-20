@@ -19,7 +19,7 @@ int const kMaxLineSize = 1000000;
 struct Option
 {
     Option() 
-        : eta0(0.001f), eta1(0.001f), eta2(0.001f), eta3(0.001f), lambda(0.0f), 
+        : eta0(0.004f), eta1(0.001f), eta2(0.001f), eta3(0.001f), lambda(0.0f), 
           iter(15), nr_factor(4), nr_threads(1), do_prediction(true), 
           model_existed(false), save_model(false) {}
     std::string Tr_path, Va_path, model_path;
@@ -150,7 +150,7 @@ void init_model(Model &model)
     float const coef = 
         static_cast<float>(0.5/sqrt(static_cast<double>(nr_factor)));
 
-    model.w0 = static_cast<float>(0.001 * drand48());
+    model.w0 = static_cast<float>(0.01 * drand48());
 
     float * w = model.W.data();
     for(uint64_t i = 0; i < range_sum; ++i)
