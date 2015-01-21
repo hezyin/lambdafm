@@ -53,8 +53,8 @@ argv_to_args(int const argc, char const * const * const argv);
 
 inline float wTx(Problem const &prob, Model &model, uint32_t const i, 
     float const kappa=0, float const eta0=0, float const eta1 = 0,
-    float const eta2=0, float const eta3=0, float const lambda=0, 
-    bool const do_update=false)
+    float const eta2=0, float const eta3=0, float const l0=0, float const l1=0,
+    float const l2=0, float const l3=0, bool const do_update=false)
 {
     uint32_t const nr_feature = prob.nr_feature;
     uint64_t const range_sum = prob.range_sum; 
@@ -88,7 +88,7 @@ inline float wTx(Problem const &prob, Model &model, uint32_t const i,
     if(do_update)
     {
         //update w0
-        float const gradient = kappa + lambda * model.w0;
+        float const gradient = kappa + l0 * model.w0;
         model.w0 -= static_cast<float>(eta0 * gradient / sqrt(model.w0_sg));
         model.w0_sg += (gradient * gradient);
 
@@ -100,7 +100,7 @@ inline float wTx(Problem const &prob, Model &model, uint32_t const i,
                 continue;
             float * const w = W + j * NODE_SIZE;
             float * const shg = w + 1;
-            float const gradient = kappa + lambda * *w;
+            float const gradient = kappa + l1 * *w;
             *w -= static_cast<float>(eta1 * gradient / sqrt(*shg) ); 
             *shg += (gradient * gradient); //update history gradient sum
         }
@@ -115,7 +115,7 @@ inline float wTx(Problem const &prob, Model &model, uint32_t const i,
                     continue;
                 float * const v = V + j * valign + d;  
                 float * const shg = v + nr_factor;
-                float const gradient = kappa * sum_vx[d] * *(L+d*NODE_SIZE) + lambda * *v; 
+                float const gradient = kappa * sum_vx[d] * *(L+d*NODE_SIZE) + l2 * *v; 
                 *v -= static_cast<float> (eta2 * gradient / sqrt(*shg)); 
                 *shg += (gradient * gradient); //update sum history gradient
             }
@@ -126,7 +126,7 @@ inline float wTx(Problem const &prob, Model &model, uint32_t const i,
         {
             float * const l = L + d * NODE_SIZE; 
             float * const shg = l + 1;
-            float const gradient = kappa * sum_vx_square[d] / 2 + lambda * *l;
+            float const gradient = kappa * sum_vx_square[d] / 2 + l3 * *l;
             *l -= static_cast<float>(eta3 * gradient / sqrt(*shg) );
             *shg += (gradient * gradient);
         }
@@ -160,8 +160,8 @@ inline float wTx(Problem const &prob, Model &model, uint32_t const i,
 
 inline float wTx_sse(Problem const &prob, Model &model, uint32_t const i, 
     float const kappa=0, float const eta0=0, float const eta1 = 0,
-    float const eta2=0, float const eta3=0, float const lambda=0, 
-    bool const do_update=false)
+    float const eta2=0, float const eta3=0, float const l0=0, float const l1=0,
+    float const l2=0, float const l3=0, bool const do_update=false)
 {
     uint32_t const nr_feature = prob.nr_feature;
     uint64_t const range_sum = prob.range_sum; 
@@ -196,7 +196,7 @@ inline float wTx_sse(Problem const &prob, Model &model, uint32_t const i,
     if(do_update)
     {
         //update w0
-        float const gradient = kappa + lambda * model.w0;
+        float const gradient = kappa + l0 * model.w0;
         model.w0 -= static_cast<float>(eta0 * gradient / sqrt(model.w0_sg));
         model.w0_sg += (gradient * gradient);
 
@@ -208,7 +208,7 @@ inline float wTx_sse(Problem const &prob, Model &model, uint32_t const i,
                 continue;
             float * const w = W + j * NODE_SIZE;
             float * const shg = w + 1;
-            float const gradient = kappa + lambda * *w;
+            float const gradient = kappa + l1 * *w;
             *w -= static_cast<float>(eta1 * gradient / sqrt(*shg) ); 
             *shg += (gradient * gradient); //update history gradient sum
         }
@@ -216,7 +216,7 @@ inline float wTx_sse(Problem const &prob, Model &model, uint32_t const i,
         //update second order parameters
         __m128 const xMMkappa = _mm_set1_ps(kappa);
         __m128 const xMMeta = _mm_set1_ps(eta2);
-        __m128 const xMMlambda = _mm_set1_ps(lambda);
+        __m128 const xMMlambda = _mm_set1_ps(l2);
         for(uint32_t f = 0; f < nr_feature; ++f)
         {
             uint64_t const j = J[f];
@@ -252,7 +252,7 @@ inline float wTx_sse(Problem const &prob, Model &model, uint32_t const i,
         {
             float * const l = L + d * NODE_SIZE; 
             float * const shg = l + 1;
-            float const gradient = kappa * sum_vx_square[d] / 2 + lambda * *l;
+            float const gradient = kappa * sum_vx_square[d] / 2 + l3 * *l;
             *l -= static_cast<float>(eta3 * gradient / sqrt(*shg) );
             *shg += (gradient * gradient);
         }
