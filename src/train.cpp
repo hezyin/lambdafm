@@ -20,7 +20,7 @@ struct Option
 {
     Option() 
         : eta0(0.004f), eta1(0.01f), eta2(0.001f), eta3(0.001f), 
-          l0(0.0f), l1(0.0f), l2(0.0f), l3(0.0f),
+          l0(0.00002f), l1(0.00002f), l2(0.00002f), l3(0.00002f),
           iter(15), nr_factor(4), nr_threads(1), do_prediction(true), 
           model_existed(false), save_model(false) {}
     std::string Tr_path, Va_path, model_path, log_path;
