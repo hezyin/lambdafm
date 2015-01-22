@@ -503,9 +503,9 @@ int main(int const argc, char const * const * const argv)
     }
     if(opt.do_prediction)
     {
-        double Va_loss = predict(Va, model, opt.Va_path+".out");
+        double Va_loss = predict(Va, model, "prediction");
         printf("%f\n", Va_loss);
-        double auc_score = auc(Va, opt.Va_path+".out");
+        double auc_score = auc(Va, "prediction");
         printf("%f\n", auc_score);
     }
 
