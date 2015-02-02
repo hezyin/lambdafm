@@ -16,10 +16,12 @@ struct Problem
 {
     Problem(uint32_t const nr_instance, uint32_t const nr_feature, uint64_t const range_sum)
           :nr_instance(nr_instance), nr_feature(nr_feature), range_sum(range_sum),  
+          norm(2.0f/static_cast<float>(nr_feature)),
           J(static_cast<uint64_t>(nr_instance) * nr_feature, range_sum), 
           Y(nr_instance){}
     uint32_t nr_instance, nr_feature;
     uint64_t range_sum;
+    float norm;
     std::vector<uint64_t> J; 
     std::vector<float> Y; 
 };
@@ -215,7 +217,7 @@ inline float wTx_sse(Problem const &prob, Model &model, uint32_t const i,
         }
 
         //update second order parameters
-        __m128 const xMMkappa = _mm_set1_ps(kappa);
+        __m128 const xMMkappa = _mm_set1_ps(kappa * prob.norm);
         __m128 const xMMeta = _mm_set1_ps(eta2);
         __m128 const xMMlambda = _mm_set1_ps(l2);
         for(uint32_t f = 0; f < nr_feature; ++f)
@@ -277,6 +279,7 @@ inline float wTx_sse(Problem const &prob, Model &model, uint32_t const i,
         {
             second_order += *(L + d * NODE_SIZE) * sum_vx_square[d];
         }
+        second_order *= prob.norm;
         predict += (second_order / 2);
     }
 
