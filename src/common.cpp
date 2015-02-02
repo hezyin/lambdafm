@@ -24,10 +24,102 @@ uint32_t get_nr_line(std::string const path)
     return nr_line;
 }
 
+uint32_t get_nr_field(std::string const &path)
+{
+    FILE *f = open_c_file(path.c_str(), "r");
+    char line[kMaxLineSize];
+
+    fgets(line, kMaxLineSize, f);
+    strtok(line, " \t");
+
+    uint32_t nr_field = 0;
+    while(1)
+    {
+        char *idx_char = strtok(nullptr," \t");
+        if(idx_char == nullptr || *idx_char == '\n')
+            break;
+        ++nr_field;
+    }
+
+    fclose(f);
+
+    return nr_field;
+}
+
 } //unamed namespace
 
+Problem read_tr_problem_fast(std::string const tr_path, 
+                    std::unordered_map<std::pair<uint32_t, uint32_t>, uint64_t, pairhash> &fviMap)
+{
+    if(tr_path.empty())
+        return Problem(0, 0, 0);
 
-Problem read_tr_problem(std::string const tr_path, std::unordered_map<std::pair<uint32_t, uint32_t>, uint64_t, pairhash> &fviMap)
+    FILE *f;
+    char *record, *y_char;
+    char line[kMaxLineSize];
+    uint64_t range_sum, w_ind, d_ind;
+    uint32_t nr_line, nr_feature, cf, cv;
+    std::pair<uint32_t, uint32_t> temp_pair;
+    std::unordered_map<std::pair<uint32_t, uint32_t>, uint64_t, pairhash>::iterator it;
+
+    nr_line = get_nr_line(tr_path);
+    nr_feature = get_nr_field(tr_path);
+    uint32_t data[nr_line * nr_feature];
+    float y[nr_line];
+    std::cout << "nr_line: " << nr_line << "\n";
+    std::cout << "nr_feature: " << nr_feature << "\n";
+
+    f = open_c_file(tr_path.c_str(), "r");
+    w_ind = d_ind = 0;
+    for(uint32_t i = 0; fgets(line, kMaxLineSize, f) != nullptr; ++i)
+    {
+        size_t ln = strlen(line) - 1;
+        if(line[ln] == '\n')
+            line[ln] = '\0';
+
+        y_char = strtok(line, " \t");
+        y[i] = (atoi(y_char) > 0) ? 1.0f : -1.0f; 
+        record = strtok(nullptr, " \t");
+        cf = 1;
+        do {
+            cv = static_cast<uint32_t>(std::stol(record));
+            data[d_ind] = cv;
+            ++d_ind;
+            temp_pair = std::make_pair(cf, cv);
+            it = fviMap.find(temp_pair);
+            if (it == fviMap.end())
+            {
+                fviMap[temp_pair] = w_ind;
+                w_ind++;
+            }
+            record = strtok(nullptr, " \t");
+            ++cf;
+        } while(record != nullptr);
+    }
+    fclose(f);
+
+    range_sum = fviMap.size();
+    std::cout << "range_sum: " << range_sum << "\n";
+    Problem prob(nr_line, nr_feature, range_sum);
+    memcpy(&prob.Y[0], &y[0], nr_line * sizeof(float));
+
+    d_ind = 0;
+    for(uint32_t i = 0; i < nr_line; ++i)
+    {
+        for(uint32_t cf = 1; cf < nr_feature + 1; ++cf)
+        {
+            cv = data[d_ind];
+            temp_pair = std::make_pair(cf, cv);
+            it = fviMap.find(temp_pair);
+            prob.J[d_ind] = it->second;
+            ++d_ind;
+        }
+    }
+    return prob;
+}
+
+Problem read_tr_problem(std::string const tr_path, 
+                    std::unordered_map<std::pair<uint32_t, uint32_t>, uint64_t, pairhash> &fviMap)
 {
     if(tr_path.empty())
         return Problem(0, 0, 0);

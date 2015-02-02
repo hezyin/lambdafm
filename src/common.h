@@ -24,6 +24,7 @@ struct Problem
     std::vector<float> Y; 
 };
 
+Problem read_tr_problem_fast(std::string const tr_path, std::unordered_map<std::pair<uint32_t, uint32_t>, uint64_t, pairhash> &fviMap);
 
 Problem read_tr_problem(std::string const tr_path, std::unordered_map<std::pair<uint32_t, uint32_t>, uint64_t, pairhash> &fviMap);
 
